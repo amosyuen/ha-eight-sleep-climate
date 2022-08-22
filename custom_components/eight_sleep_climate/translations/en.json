@@ -1,0 +1,14 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "data": {
+          "eight_sleep_state": "Eight sleep side"
+        }
+      }
+    },
+    "error": {
+      "no_devices": "No valid eight sleep devices"
+    }
+  }
+}
