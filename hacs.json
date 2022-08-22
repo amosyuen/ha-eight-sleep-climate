@@ -1,0 +1,6 @@
+{
+  "name": "Eight Sleep Climate",
+  "hacs": "1.0.0",
+  "homeassistant": "0.118.0",
+  "render_readme": true
+}

@@ -1,0 +1,11 @@
+{
+  "domain": "eight_sleep_climate",
+  "name": "Eight Sleep Climate",
+  "documentation": "https://github.com/amosyuen/ha-eight-sleep-climate",
+  "issue_tracker": "https://github.com/amosyuen/ha-eight-sleep-climate/issues",
+  "iot_class": "local_push",
+  "version": "1.0.0",
+  "config_flow": true,
+  "dependencies": [],
+  "codeowners": ["@amosyuen"]
+}
