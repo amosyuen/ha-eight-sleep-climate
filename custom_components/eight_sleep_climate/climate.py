@@ -175,6 +175,7 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
             "async_set_temperature %s",
             kwargs,
         )
+        hvac_mode = self.hvac_mode
         if ATTR_TEMPERATURE in kwargs:
             target_temp = int(kwargs[ATTR_TEMPERATURE])
             if target_temp < self._attr_min_temp or target_temp > self._attr_max_temp:
@@ -189,7 +190,6 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
             hvac_mode = HVAC_MODE_AUTO
             self.async_schedule_update_ha_state()
 
-        hvac_mode = self.hvac_mode
         if ATTR_HVAC_MODE in kwargs:
             hvac_mode = kwargs[ATTR_HVAC_MODE]
             if hvac_mode not in self._attr_hvac_modes:
