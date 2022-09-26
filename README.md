@@ -15,7 +15,7 @@
 
 ## Purpose
 
-Creates a virtual climate that controls an eight sleep mattress. This allows exposing the climate to google home and controlling it using voice commands.
+Creates a virtual climate that controls an eight sleep mattress. This allows exposing the climate to google home and controlling it using voice commands. Currently the units is "percent" but will show as default home assistant temperature unit.
 
 ### Climate Attributes Supported
 

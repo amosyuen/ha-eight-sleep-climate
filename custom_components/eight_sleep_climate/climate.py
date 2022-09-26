@@ -10,7 +10,7 @@ from homeassistant.components.climate.const import CURRENT_HVAC_COOL
 from homeassistant.components.climate.const import CURRENT_HVAC_HEAT
 from homeassistant.components.climate.const import CURRENT_HVAC_IDLE
 from homeassistant.components.climate.const import CURRENT_HVAC_OFF
-from homeassistant.components.climate.const import HVAC_MODE_AUTO
+from homeassistant.components.climate.const import HVAC_MODE_HEAT_COOL
 from homeassistant.components.climate.const import HVAC_MODE_OFF
 from homeassistant.components.eight_sleep.const import ATTR_DURATION
 from homeassistant.components.eight_sleep.const import ATTR_TARGET
@@ -84,7 +84,7 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
         self._eight_sleep_state_entity_id = eight_sleep_state_entity_id
 
         self._attr_unique_id = unique_id
-        self._attr_hvac_modes = [HVAC_MODE_AUTO, HVAC_MODE_OFF]
+        self._attr_hvac_modes = [HVAC_MODE_HEAT_COOL, HVAC_MODE_OFF]
         self._attr_max_temp = 100
         self._attr_min_temp = -100
         self._attr_name = name
@@ -152,7 +152,7 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
     @property
     def hvac_mode(self):
         """Return the hvac_mode."""
-        return HVAC_MODE_AUTO if self._is_running() else HVAC_MODE_OFF
+        return HVAC_MODE_HEAT_COOL if self._is_running() else HVAC_MODE_OFF
 
     @property
     def supported_features(self):
@@ -187,7 +187,7 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
                 )
                 return False
             self._attr_target_temperature = target_temp
-            hvac_mode = HVAC_MODE_AUTO
+            hvac_mode = HVAC_MODE_HEAT_COOL
             self.async_schedule_update_ha_state()
 
         if ATTR_HVAC_MODE in kwargs:
@@ -198,7 +198,7 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
 
         data = {
             ATTR_ENTITY_ID: self._eight_sleep_state_entity_id,
-            ATTR_DURATION: 7200 if hvac_mode == HVAC_MODE_AUTO else 0,
+            ATTR_DURATION: 7200 if hvac_mode == HVAC_MODE_HEAT_COOL else 0,
             ATTR_TARGET: self._attr_target_temperature,
         }
         _LOGGER.debug("_async_update_climate: Set heat data=%s", data)
@@ -212,7 +212,7 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
 
     async def async_turn_on(self):
         """Turn thermostat on."""
-        await self.async_set_temperature(hvac_mode=HVAC_MODE_AUTO)
+        await self.async_set_temperature(hvac_mode=HVAC_MODE_HEAT_COOL)
 
     def _get_target_temp(self):
         state = self._get_eight_sleep_state()
