@@ -15,7 +15,27 @@
 
 ## Purpose
 
-Creates a virtual climate that controls an eight sleep mattress. This allows exposing the climate to google home and controlling it using voice commands. Currently the units is "percent" but will show as default home assistant temperature unit.
+Creates a virtual climate that controls an eight sleep mattress. This allows exposing the climate to google home and controlling it using voice commands. Currently the units is "percent" but will show as default home assistant temperature unit. This implementation is a bit of a hack since google isn't really designed to handle percent in a thermostat so there are some things that do not work.
+
+## Google Assitant
+
+### Queries Supported
+
+- "what is <device> temperature"
+- "set <device> heat to -100"
+- "set <device> heat to -45 degrees"
+- "set <device> temperature to 0"
+
+### Queries Unsupported
+
+- "what is <device> heat"
+- "set <device> cool to -100 degrees"
+- "set <device> to -100"
+- "set <device> temperature to -100 degrees"
+
+### UI
+
+The Google Assistant UI is limited to setting temperature between 50 to 90 degrees. It is not recommended to use the Google Home UI. Instead I recommend exposing virtual fan or switch to use in the Google Home UI.
 
 ### Climate Attributes Supported
 
