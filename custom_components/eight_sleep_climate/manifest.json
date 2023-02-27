@@ -1,11 +1,11 @@
 {
   "domain": "eight_sleep_climate",
   "name": "Eight Sleep Climate",
-  "documentation": "https://github.com/amosyuen/ha-eight-sleep-climate",
-  "issue_tracker": "https://github.com/amosyuen/ha-eight-sleep-climate/issues",
-  "iot_class": "cloud_polling",
-  "version": "2.0.0",
-  "config_flow": true,
   "after_dependencies": ["eight_sleep"],
-  "codeowners": ["@amosyuen"]
+  "codeowners": ["@amosyuen"],
+  "config_flow": true,
+  "documentation": "https://github.com/amosyuen/ha-eight-sleep-climate",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/amosyuen/ha-eight-sleep-climate/issues",
+  "version": "2.0.0"
 }
