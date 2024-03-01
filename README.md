@@ -50,6 +50,8 @@ The Google Assistant UI is limited to setting temperature between 50 to 90 degre
 
 ## Installation
 
+Requries https://github.com/lukas-clarke/eight_sleep to be installed.
+
 ### HACS
 
 1. Install [HACS](https://hacs.xyz/)

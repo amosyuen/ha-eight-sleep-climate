@@ -5,9 +5,11 @@ from typing import List
 from typing import Set
 
 import voluptuous as vol
+from custom_components.eight_sleep.const import (
+    DOMAIN as EIGHT_SLEEP_DOMAIN,
+)
 from homeassistant import config_entries
 from homeassistant.components.climate import DOMAIN as CLIMATE_PLATFORM
-from homeassistant.components.eight_sleep.const import DOMAIN as EIGHT_SLEEP_DOMAIN
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant
