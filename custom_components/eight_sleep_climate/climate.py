@@ -1,6 +1,18 @@
 """Adds support for Eight Sleep thermostat units."""
+
 import logging
 
+from custom_components.eight_sleep.const import ATTR_DURATION
+from custom_components.eight_sleep.const import ATTR_SERVICE_SLEEP_STAGE
+from custom_components.eight_sleep.const import ATTR_TARGET
+from custom_components.eight_sleep.const import (
+    DOMAIN as EIGHT_SLEEP_DOMAIN,
+)
+from custom_components.eight_sleep.const import SERVICE_HEAT_SET
+from custom_components.eight_sleep.const import SERVICE_SIDE_OFF
+from custom_components.eight_sleep.const import SERVICE_SIDE_ON
+from custom_components.eight_sleep.sensor import ATTR_DURATION_HEAT
+from custom_components.eight_sleep.sensor import ATTR_TARGET_HEAT
 from homeassistant.components.climate import (
     ClimateEntity,
 )
@@ -10,14 +22,9 @@ from homeassistant.components.climate.const import CURRENT_HVAC_COOL
 from homeassistant.components.climate.const import CURRENT_HVAC_HEAT
 from homeassistant.components.climate.const import CURRENT_HVAC_IDLE
 from homeassistant.components.climate.const import CURRENT_HVAC_OFF
+from homeassistant.components.climate.const import HVAC_MODE_AWAY
 from homeassistant.components.climate.const import HVAC_MODE_HEAT_COOL
 from homeassistant.components.climate.const import HVAC_MODE_OFF
-from homeassistant.components.eight_sleep.const import ATTR_DURATION
-from homeassistant.components.eight_sleep.const import ATTR_TARGET
-from homeassistant.components.eight_sleep.const import DOMAIN as EIGHT_SLEEP_DOMAIN
-from homeassistant.components.eight_sleep.const import SERVICE_HEAT_SET
-from homeassistant.components.eight_sleep.sensor import ATTR_DURATION_HEAT
-from homeassistant.components.eight_sleep.sensor import ATTR_TARGET_HEAT
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_ENTITY_ID
@@ -35,6 +42,7 @@ from homeassistant.helpers.restore_state import RestoreEntity
 from .util import remove_unique_id_postfix
 
 ATTR_TARGET_TEMP = "target_temperature"
+STAGE_CURRENT = "current"
 EIGHT_HEAT_SENSOR = "bed_state"
 
 _LOGGER = logging.getLogger(__name__)
@@ -84,7 +92,7 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
         self._eight_sleep_state_entity_id = eight_sleep_state_entity_id
 
         self._attr_unique_id = unique_id
-        self._attr_hvac_modes = [HVAC_MODE_HEAT_COOL, HVAC_MODE_OFF]
+        self._attr_hvac_modes = [HVAC_MODE_AWAY, HVAC_MODE_HEAT_COOL, HVAC_MODE_OFF]
         self._attr_max_temp = 100
         self._attr_min_temp = -100
         self._attr_name = name
@@ -176,6 +184,7 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
             kwargs,
         )
         hvac_mode = self.hvac_mode
+        target_temp = None
         if ATTR_TEMPERATURE in kwargs:
             target_temp = int(kwargs[ATTR_TEMPERATURE])
             if target_temp < self._attr_min_temp or target_temp > self._attr_max_temp:
@@ -196,15 +205,29 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
                 _LOGGER.error("Unrecognized hvac mode: %s", hvac_mode)
                 return False
 
-        data = {
-            ATTR_ENTITY_ID: self._eight_sleep_state_entity_id,
-            ATTR_DURATION: 7200 if hvac_mode == HVAC_MODE_HEAT_COOL else 0,
-            ATTR_TARGET: self._attr_target_temperature,
-        }
-        _LOGGER.debug("_async_update_climate: Set heat data=%s", data)
-        await self.hass.services.async_call(
-            EIGHT_SLEEP_DOMAIN, SERVICE_HEAT_SET, data, False
-        )
+        if hvac_mode != HVAC_MODE_HEAT_COOL:
+            data = {ATTR_ENTITY_ID: self._eight_sleep_state_entity_id}
+            _LOGGER.debug("_async_update_climate: Turn off side data=%s", data)
+            await self.hass.services.async_call(
+                EIGHT_SLEEP_DOMAIN, SERVICE_SIDE_OFF, data, False
+            )
+        elif target_temp is None:
+            data = {ATTR_ENTITY_ID: self._eight_sleep_state_entity_id}
+            _LOGGER.debug("_async_update_climate: Turn on side data=%s", data)
+            await self.hass.services.async_call(
+                EIGHT_SLEEP_DOMAIN, SERVICE_SIDE_ON, data, False
+            )
+        else:
+            data = {
+                ATTR_SERVICE_SLEEP_STAGE: STAGE_CURRENT,
+                ATTR_ENTITY_ID: self._eight_sleep_state_entity_id,
+                ATTR_DURATION: 7200 if hvac_mode == HVAC_MODE_HEAT_COOL else 0,
+                ATTR_TARGET: self._attr_target_temperature,
+            }
+            _LOGGER.debug("_async_update_climate: Set heat data=%s", data)
+            await self.hass.services.async_call(
+                EIGHT_SLEEP_DOMAIN, SERVICE_HEAT_SET, data, False
+            )
 
     async def async_turn_off(self):
         """Turn thermostat on."""
