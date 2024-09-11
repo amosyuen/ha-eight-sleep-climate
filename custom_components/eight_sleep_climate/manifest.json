@@ -7,5 +7,5 @@
   "documentation": "https://github.com/amosyuen/ha-eight-sleep-climate",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/amosyuen/ha-eight-sleep-climate/issues",
-  "version": "3.0.0"
+  "version": "3.0.1"
 }
