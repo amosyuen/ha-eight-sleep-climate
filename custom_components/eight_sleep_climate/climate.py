@@ -29,6 +29,7 @@ from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.const import ATTR_TEMPERATURE
 from homeassistant.const import CONF_NAME
 from homeassistant.const import STATE_UNAVAILABLE
+from homeassistant.const import STATE_UNKNOWN
 from homeassistant.core import callback
 from homeassistant.helpers import entity_registry
 from homeassistant.helpers.entity import DeviceInfo
@@ -44,6 +45,12 @@ STAGE_CURRENT = "current"
 EIGHT_HEAT_SENSOR = "bed_state"
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def _to_int(state):
+    if state in [None, STATE_UNKNOWN, STATE_UNAVAILABLE]:
+        return None
+    return int(state)
 
 
 async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
@@ -134,7 +141,7 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
 
         state = self._get_eight_sleep_state()
         if state is not None:
-            return int(state.state)
+            return _to_int(state.state)
         return None
 
     @property
@@ -238,7 +245,7 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
     def _get_target_temp(self):
         state = self._get_eight_sleep_state()
         if state is not None:
-            return int(state.attributes.get(ATTR_TARGET_HEAT))
+            return _to_int(state.attributes.get(ATTR_TARGET_HEAT))
         return None
 
     def _is_running(self, state=None):
@@ -246,9 +253,8 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
         if state is None:
             state = self._get_eight_sleep_state()
         if state is not None:
-            duration = state.attributes.get(ATTR_DURATION_HEAT)
-            if duration is not None:
-                return int(duration) > 0
+            duration = _to_int(state.attributes.get(ATTR_DURATION_HEAT))
+            return duration is not None and duration > 0
         return None
 
     def _get_eight_sleep_state(self):
@@ -264,7 +270,7 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
 
         is_running_new = self._is_running(new_state)
         if is_running_new:
-            target_temp = int(new_state.attributes.get(ATTR_TARGET_HEAT))
+            target_temp = _to_int(new_state.attributes.get(ATTR_TARGET_HEAT))
             if target_temp != self._attr_target_temperature:
                 self._attr_target_temperature = target_temp
                 self.async_schedule_update_ha_state()
