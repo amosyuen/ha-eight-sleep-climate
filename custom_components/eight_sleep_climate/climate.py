@@ -17,12 +17,8 @@ from homeassistant.components.climate import (
 )
 from homeassistant.components.climate.const import ATTR_HVAC_MODE
 from homeassistant.components.climate.const import ClimateEntityFeature
-from homeassistant.components.climate.const import CURRENT_HVAC_COOL
-from homeassistant.components.climate.const import CURRENT_HVAC_HEAT
-from homeassistant.components.climate.const import CURRENT_HVAC_IDLE
-from homeassistant.components.climate.const import CURRENT_HVAC_OFF
-from homeassistant.components.climate.const import HVAC_MODE_HEAT_COOL
-from homeassistant.components.climate.const import HVAC_MODE_OFF
+from homeassistant.components.climate.const import HVACAction
+from homeassistant.components.climate.const import HVACMode
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_ENTITY_ID
@@ -97,7 +93,7 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
         self._eight_sleep_state_entity_id = eight_sleep_state_entity_id
 
         self._attr_unique_id = unique_id
-        self._attr_hvac_modes = [HVAC_MODE_HEAT_COOL, HVAC_MODE_OFF]
+        self._attr_hvac_modes = [HVACMode.HEAT_COOL, HVACMode.OFF]
         self._attr_max_temp = 100
         self._attr_min_temp = -100
         self._attr_name = name
@@ -148,14 +144,14 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
     def hvac_action(self):
         """Return the current running hvac operation.."""
         if not self._is_running():
-            return CURRENT_HVAC_OFF
+            return HVACAction.OFF
 
         diff = self.target_temperature - self.current_temperature
         if diff < 0:
-            return CURRENT_HVAC_COOL
+            return HVACAction.COOLING
         if diff > 0:
-            return CURRENT_HVAC_HEAT
-        return CURRENT_HVAC_IDLE
+            return HVACAction.HEATING
+        return HVACAction.IDLE
 
     @property
     def state(self):
@@ -165,7 +161,7 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
     @property
     def hvac_mode(self):
         """Return the hvac_mode."""
-        return HVAC_MODE_HEAT_COOL if self._is_running() else HVAC_MODE_OFF
+        return HVACMode.HEAT_COOL if self._is_running() else HVACMode.OFF
 
     @property
     def supported_features(self):
@@ -201,7 +197,7 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
                 )
                 return False
             self._attr_target_temperature = target_temp
-            hvac_mode = HVAC_MODE_HEAT_COOL
+            hvac_mode = HVACMode.HEAT_COOL
             self.async_schedule_update_ha_state()
 
         if ATTR_HVAC_MODE in kwargs:
@@ -210,7 +206,7 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
                 _LOGGER.error("Unrecognized hvac mode: %s", hvac_mode)
                 return False
 
-        if hvac_mode != HVAC_MODE_HEAT_COOL:
+        if hvac_mode != HVACMode.HEAT_COOL:
             data = {ATTR_ENTITY_ID: self._eight_sleep_state_entity_id}
             _LOGGER.debug("_async_update_climate: Turn off side data=%s", data)
             await self.hass.services.async_call(
@@ -226,7 +222,7 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
             data = {
                 ATTR_SERVICE_SLEEP_STAGE: STAGE_CURRENT,
                 ATTR_ENTITY_ID: self._eight_sleep_state_entity_id,
-                ATTR_DURATION: 7200 if hvac_mode == HVAC_MODE_HEAT_COOL else 0,
+                ATTR_DURATION: 7200 if hvac_mode == HVACMode.HEAT_COOL else 0,
                 ATTR_TARGET: self._attr_target_temperature,
             }
             _LOGGER.debug("_async_update_climate: Set heat data=%s", data)
@@ -236,11 +232,11 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
 
     async def async_turn_off(self):
         """Turn thermostat on."""
-        await self.async_set_temperature(hvac_mode=HVAC_MODE_OFF)
+        await self.async_set_temperature(hvac_mode=HVACMode.OFF)
 
     async def async_turn_on(self):
         """Turn thermostat on."""
-        await self.async_set_temperature(hvac_mode=HVAC_MODE_HEAT_COOL)
+        await self.async_set_temperature(hvac_mode=HVACMode.HEAT_COOL)
 
     def _get_target_temp(self):
         state = self._get_eight_sleep_state()
