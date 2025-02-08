@@ -10,6 +10,7 @@ CONF_EIGHT_SLEEP_DEVICE = "eight_sleep_state"
 # Platforms
 PLATFORMS = [CLIMATE_PLATFORM]
 
+# Conversion Table for Celsius
 RAW_TO_CELSIUS_MAP = {
     -100: 13,
     -97: 14,
@@ -45,6 +46,7 @@ RAW_TO_CELSIUS_MAP = {
     100: 44,
 }
 
+# Conversion Table for Farenheit
 RAW_TO_FAHRENHEIT_MAP = {
     -100: 55,
     -99: 56,

@@ -29,7 +29,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import callback
 from homeassistant.helpers import entity_registry
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity import DeviceInfo, Entity
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.restore_state import RestoreEntity
 
@@ -47,12 +47,6 @@ def _to_int(state):
         return None
     return int(state)
 
-def _to_degree(state):
-    if state in [None, STATE_UNKNOWN, STATE_UNAVAILABLE]:
-        return None
-    return round(DegreeConversion.convert_raw_temp_degrees(int(state), "f"))
-
-
 async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     """Set up the eight sleep thermostat platform."""
     _LOGGER.debug("Adding climate: %s", config_entry.data)
@@ -64,7 +58,7 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
                 config_entry.unique_id,
                 name,
                 get_entity_id(hass, config_entry.unique_id),
-                hass.config.units.temperature_unit,
+                hass.config.units.temperature_unit
             )
         ]
     )
@@ -84,8 +78,8 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
     """Representation of a Eight Sleep Thermostat device."""
 
     _attr_hvac_modes = [HVACMode.HEAT_COOL, HVACMode.OFF]
-    _attr_max_temp = _to_degree(100)
-    _attr_min_temp = _to_degree(-100)
+    _attr_max_temp = 100
+    _attr_min_temp = -100
     _attr_should_poll = False
     _attr_supported_features = (
         ClimateEntityFeature.TARGET_TEMPERATURE
@@ -113,6 +107,14 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
         self._attr_name = name
         self._attr_temperature_unit = temperature_unit
 
+        self.initialize_units()
+        # initialize units to correct values
+
+    def initialize_units(self):
+        self._attr_max_temp = self._to_degree(self._attr_max_temp)
+        self._attr_min_temp = self._to_degree(self._attr_min_temp)
+
+
     async def async_added_to_hass(self):
         """Run when entity about to be added."""
         await super().async_added_to_hass()
@@ -124,9 +126,9 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
             old_state = await self.async_get_last_state()
             if old_state is not None:
                 if self._attr_target_temperature is None:
-                    self._attr_target_temperature = _to_degree(old_state.attributes.get(ATTR_TARGET_TEMP))
+                    self._attr_target_temperature = self._to_degree(old_state.attributes.get(ATTR_TARGET_TEMP))
             if self._attr_target_temperature is None:
-                self._attr_target_temperature = _to_degree(10)
+                self._attr_target_temperature = self._to_degree(10)
 
         # Add listener
         async_track_state_change_event(
@@ -146,7 +148,7 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
 
         state = self._get_eight_sleep_state()
         if state is not None:
-            return _to_degree(state.state)
+            return self._to_degree(state.state)
         return None
 
     @property
@@ -227,7 +229,7 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
                 ATTR_SERVICE_SLEEP_STAGE: STAGE_CURRENT,
                 ATTR_ENTITY_ID: self._eight_sleep_state_entity_id,
                 ATTR_DURATION: 7200 if hvac_mode == HVACMode.HEAT_COOL else 0,
-                ATTR_TARGET:  DegreeConversion.convert_degree_to_raw_temp(self._attr_target_temperature, "f"),
+                ATTR_TARGET:  self._to_raw_temp(self._attr_target_temperature),
             }
             _LOGGER.debug("_async_update_climate: Set heat data=%s", data)
             await self.hass.services.async_call(
@@ -245,7 +247,7 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
     def _get_target_temp(self):
         state = self._get_eight_sleep_state()
         if state is not None:
-            return _to_degree(state.attributes.get(ATTR_TARGET_HEAT))
+            return self._to_degree(state.attributes.get(ATTR_TARGET_HEAT))
         return None
 
     def _is_running(self, state=None):
@@ -260,6 +262,15 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
     def _get_eight_sleep_state(self):
         return self.hass.states.get(self._eight_sleep_state_entity_id)
 
+
+    def _to_degree(self, raw_temp):
+        if raw_temp in [None, STATE_UNKNOWN, STATE_UNAVAILABLE]:
+            return None
+        return round(DegreeConversion.convert_raw_temp_degrees(int(raw_temp), self._attr_temperature_unit))
+
+    def _to_raw_temp(self, temp_degree):
+        return DegreeConversion.convert_degree_to_raw_temp(temp_degree, self._attr_temperature_unit)
+
     @callback
     async def _async_bed_state_changed(self, event):
         """Handle bed state changes."""
@@ -270,7 +281,7 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
 
         is_running_new = self._is_running(new_state)
         if is_running_new:
-            target_temp = _to_degree(new_state.attributes.get(ATTR_TARGET_HEAT))
+            target_temp = self._to_degree(new_state.attributes.get(ATTR_TARGET_HEAT))
             if target_temp != self._attr_target_temperature:
                 self._attr_target_temperature = target_temp
                 self.async_schedule_update_ha_state()

@@ -1,6 +1,8 @@
 """Utils."""
 import bisect
 
+from homeassistant.const import UnitOfTemperature
+
 from .const import RAW_TO_CELSIUS_MAP, RAW_TO_FAHRENHEIT_MAP, UNIQUE_ID_POSTFIX
 
 
@@ -16,10 +18,13 @@ def remove_unique_id_postfix(unique_id):
 class DegreeConversion:
     @staticmethod
     def convert_raw_temp_degrees(raw_val, degree_unit):
-
+        """Convert Eight Sleep Raw Temp (both F and C depending on the HA Config in Preferences)
+           to Degres (either in F and C depending on the HA Config in Preferences)
+           This method uses interpolation to determine the degree.
+        """
         unit_map = RAW_TO_FAHRENHEIT_MAP
 
-        if degree_unit == "c":
+        if degree_unit == UnitOfTemperature.CELSIUS:
             unit_map = RAW_TO_CELSIUS_MAP
 
         if raw_val in unit_map:
@@ -45,9 +50,14 @@ class DegreeConversion:
 
     @staticmethod
     def convert_degree_to_raw_temp(degree_val, degree_unit):
+        """Convert Degrees (either F and C depending on the HA Config in Preferences)
+           to  Eight Sleep Raw Temp. This method uses reverse interpolation to determine the
+           raw temp.
+        """
+
         unit_map = RAW_TO_FAHRENHEIT_MAP
 
-        if degree_unit == "c":
+        if degree_unit == UnitOfTemperature.CELSIUS:
             unit_map = RAW_TO_CELSIUS_MAP
 
         temp_raw_map = {v: k for k, v in unit_map.items()}
@@ -55,16 +65,16 @@ class DegreeConversion:
         # Sorted temperature values for binary search
         temp_keys = sorted(temp_raw_map.keys())  # [55, 56, 57, 58, ...]
 
-        # Find index where 57.6°F would be inserted
-        idx = bisect.bisect_left(temp_keys, 57.6)  # Returns index where 57.6 fits
+        # Find index where degree_val would be inserted
+        insertion_index = bisect.bisect_left(temp_keys, degree_val)  # Returns index where degree_val fits
 
         # Get nearest known values
-        temp_low, temp_high = temp_keys[idx - 1], temp_keys[idx]  # 57 and 58
-        raw_low, raw_high = temp_raw_map[temp_low], temp_raw_map[temp_high]  # -97 and -95
+        temp_low, temp_high = temp_keys[insertion_index - 1], temp_keys[insertion_index]
+        raw_low, raw_high = temp_raw_map[temp_low], temp_raw_map[temp_high]
 
-        # Interpolation
-        ratio = (57.6 - temp_low) / (temp_high - temp_low)  # 0.6
-        interpolated_raw = raw_low + ratio * (raw_high - raw_low)  # -95.8
+        # Peform Linear Interpolation
+        ratio = (degree_val- temp_low) / (temp_high - temp_low)
+        interpolated_raw = raw_low + ratio * (raw_high - raw_low)
 
         return interpolated_raw
 
