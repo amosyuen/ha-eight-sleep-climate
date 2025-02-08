@@ -1,40 +1,39 @@
 """Adds support for Eight Sleep thermostat units."""
 import logging
 
-from custom_components.eight_sleep.const import ATTR_DURATION
-from custom_components.eight_sleep.const import ATTR_SERVICE_SLEEP_STAGE
-from custom_components.eight_sleep.const import ATTR_TARGET
 from custom_components.eight_sleep.const import (
+    ATTR_DURATION,
+    ATTR_SERVICE_SLEEP_STAGE,
+    ATTR_TARGET,
     DOMAIN as EIGHT_SLEEP_DOMAIN,
+    SERVICE_HEAT_SET,
+    SERVICE_SIDE_OFF,
+    SERVICE_SIDE_ON,
 )
-from custom_components.eight_sleep.const import SERVICE_HEAT_SET
-from custom_components.eight_sleep.const import SERVICE_SIDE_OFF
-from custom_components.eight_sleep.const import SERVICE_SIDE_ON
-from custom_components.eight_sleep.sensor import ATTR_DURATION_HEAT
-from custom_components.eight_sleep.sensor import ATTR_TARGET_HEAT
-from homeassistant.components.climate import (
-    ClimateEntity,
+from custom_components.eight_sleep.sensor import ATTR_DURATION_HEAT, ATTR_TARGET_HEAT
+from homeassistant.components.climate import ClimateEntity
+from homeassistant.components.climate.const import (
+    ATTR_HVAC_MODE,
+    ClimateEntityFeature,
+    HVACAction,
+    HVACMode,
 )
-from homeassistant.components.climate.const import ATTR_HVAC_MODE
-from homeassistant.components.climate.const import ClimateEntityFeature
-from homeassistant.components.climate.const import HVACAction
-from homeassistant.components.climate.const import HVACMode
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_ENTITY_ID
-from homeassistant.const import ATTR_TEMPERATURE
-from homeassistant.const import CONF_NAME
-from homeassistant.const import STATE_UNAVAILABLE
-from homeassistant.const import STATE_UNKNOWN
+from homeassistant.const import (
+    ATTR_ENTITY_ID,
+    ATTR_TEMPERATURE,
+    CONF_NAME,
+    STATE_UNAVAILABLE,
+    STATE_UNKNOWN,
+)
 from homeassistant.core import callback
 from homeassistant.helpers import entity_registry
 from homeassistant.helpers.entity import DeviceInfo
-from homeassistant.helpers.event import (
-    async_track_state_change_event,
-)
+from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from .util import remove_unique_id_postfix
+from .util import DegreeConversion, remove_unique_id_postfix
 
 ATTR_TARGET_TEMP = "target_temperature"
 STAGE_CURRENT = "current"
@@ -47,6 +46,11 @@ def _to_int(state):
     if state in [None, STATE_UNKNOWN, STATE_UNAVAILABLE]:
         return None
     return int(state)
+
+def _to_degree(state):
+    if state in [None, STATE_UNKNOWN, STATE_UNAVAILABLE]:
+        return None
+    return int(DegreeConversion.convert_raw_temp_degrees(int(state), "f"))
 
 
 async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
@@ -144,7 +148,7 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
 
         state = self._get_eight_sleep_state()
         if state is not None:
-            return _to_int(state.state)
+            return _to_degree(state.state)
         return None
 
     @property
@@ -189,7 +193,7 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
         hvac_mode = self.hvac_mode
         target_temp = None
         if ATTR_TEMPERATURE in kwargs:
-            target_temp = int(kwargs[ATTR_TEMPERATURE])
+            target_temp = DegreeConversion.convert_raw_temp_degrees(int(kwargs[ATTR_TEMPERATURE]),"f")
             if target_temp < self._attr_min_temp or target_temp > self._attr_max_temp:
                 _LOGGER.error(
                     "Target temp %d must be between %d and %d inclusive",
@@ -243,7 +247,7 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
     def _get_target_temp(self):
         state = self._get_eight_sleep_state()
         if state is not None:
-            return _to_int(state.attributes.get(ATTR_TARGET_HEAT))
+            return _to_degree(state.attributes.get(ATTR_TARGET_HEAT))
         return None
 
     def _is_running(self, state=None):
@@ -251,7 +255,7 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
         if state is None:
             state = self._get_eight_sleep_state()
         if state is not None:
-            duration = _to_int(state.attributes.get(ATTR_DURATION_HEAT))
+            duration = _to_degree(state.attributes.get(ATTR_DURATION_HEAT))
             return duration is not None and duration > 0
         return None
 
@@ -268,7 +272,7 @@ class EightSleepThermostat(ClimateEntity, RestoreEntity):
 
         is_running_new = self._is_running(new_state)
         if is_running_new:
-            target_temp = _to_int(new_state.attributes.get(ATTR_TARGET_HEAT))
+            target_temp = _to_degree(new_state.attributes.get(ATTR_TARGET_HEAT))
             if target_temp != self._attr_target_temperature:
                 self._attr_target_temperature = target_temp
                 self.async_schedule_update_ha_state()
