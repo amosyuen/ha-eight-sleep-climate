@@ -68,6 +68,9 @@ class DegreeConversion:
         # Find index where degree_val would be inserted
         insertion_index = bisect.bisect_left(temp_keys, degree_val)  # Returns index where degree_val fits
 
+        if insertion_index == 0 or insertion_index == len(temp_keys):
+            raise ValueError(f"Degree value {degree_val} is out of expected range.")
+        
         # Get nearest known values
         temp_low, temp_high = temp_keys[insertion_index - 1], temp_keys[insertion_index]
         raw_low, raw_high = temp_raw_map[temp_low], temp_raw_map[temp_high]
