@@ -5,4 +5,4 @@ homeassistant==2023.6.0
 pip>=21.0,<25.2
 pre-commit==3.8.0
 reorder-python-imports==3.15.0
-ruff==0.12.9
+ruff==0.12.10
