@@ -13,11 +13,14 @@
 
 [![Community Forum][forum-shield]][forum]
 
+> [!IMPORTANT]
+> This integration is archived as a climate entity is now provided by https://github.com/lukas-clarke/eight_sleep.
+
 ## Purpose
 
 Creates a virtual climate that controls an eight sleep mattress. This allows exposing the climate to google home and controlling it using voice commands. Currently the units is "percent" but will show as default home assistant temperature unit. This implementation is a bit of a hack since google isn't really designed to handle percent in a thermostat so there are some things that do not work.
 
-## Google Assitant
+## Google Assistant
 
 ### Queries Supported
 
